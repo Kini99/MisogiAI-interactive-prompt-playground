@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MisogiAI Prompt Playground</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-4xl font-bold text-center mb-8">MisogiAI Prompt Playground</h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h2 class="text-2xl font-semibold mb-4">Model Selection</h2>
+                    <select id="model" class="w-full p-2 border rounded">
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        <option value="gpt-4">GPT-4</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <h2 class="text-2xl font-semibold mb-4">Parameters</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium">Temperature</label>
+                            <input type="range" id="temperature" min="0" max="1.2" step="0.1" value="0.7" class="w-full">
+                            <span id="temperature-value">0.7</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Max Tokens</label>
+                            <input type="range" id="max-tokens" min="50" max="300" step="50" value="150" class="w-full">
+                            <span id="max-tokens-value">150</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Presence Penalty</label>
+                            <input type="range" id="presence-penalty" min="0" max="1.5" step="0.1" value="0" class="w-full">
+                            <span id="presence-penalty-value">0.0</span>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium">Frequency Penalty</label>
+                            <input type="range" id="frequency-penalty" min="0" max="1.5" step="0.1" value="0" class="w-full">
+                            <span id="frequency-penalty-value">0.0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <h2 class="text-2xl font-semibold mb-4">Prompts</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium">System Prompt</label>
+                        <textarea id="system-prompt" class="w-full p-2 border rounded h-24" placeholder="Enter system prompt..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">User Prompt</label>
+                        <textarea id="user-prompt" class="w-full p-2 border rounded h-24" placeholder="Enter user prompt..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Stop Sequence (optional)</label>
+                        <input type="text" id="stop-sequence" class="w-full p-2 border rounded" placeholder="Enter stop sequence...">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 text-center">
+                <button id="generate-btn" class="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600 transition-colors">
+                    Generate
+                </button>
+            </div>
+        </div>
+
+        <div id="results" class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-semibold mb-4">Results</h2>
+            <div id="result-grid" class="result-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update range input values
+        document.querySelectorAll('input[type="range"]').forEach(input => {
+            const valueDisplay = document.getElementById(`${input.id}-value`);
+            input.addEventListener('input', () => {
+                valueDisplay.textContent = input.value;
+            });
+        });
+
+        // Generate button click handler
+        document.getElementById('generate-btn').addEventListener('click', async () => {
+            const resultGrid = document.getElementById('result-grid');
+            resultGrid.innerHTML = '<div class="col-span-full text-center">Generating...</div>';
+
+            const params = {
+                model: document.getElementById('model').value,
+                system_prompt: document.getElementById('system-prompt').value,
+                user_prompt: document.getElementById('user-prompt').value,
+                temperature: parseFloat(document.getElementById('temperature').value),
+                max_tokens: parseInt(document.getElementById('max-tokens').value),
+                presence_penalty: parseFloat(document.getElementById('presence-penalty').value),
+                frequency_penalty: parseFloat(document.getElementById('frequency-penalty').value),
+                stop_sequence: document.getElementById('stop-sequence').value || null
+            };
+
+            try {
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(params)
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultGrid.innerHTML = `
+                        <div class="bg-gray-50 p-4 rounded">
+                            <h3 class="font-semibold mb-2">Generated Response</h3>
+                            <p class="whitespace-pre-wrap">${data.response}</p>
+                        </div>
+                    `;
+                } else {
+                    resultGrid.innerHTML = `
+                        <div class="col-span-full text-center text-red-500">
+                            Error: ${data.error}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultGrid.innerHTML = `
+                    <div class="col-span-full text-center text-red-500">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 
