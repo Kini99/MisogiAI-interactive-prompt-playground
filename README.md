@@ -19,7 +19,7 @@ An interactive web application that allows users to experiment with different pa
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/MisogiAI-interactive-prompt-playground.git
+git clone "https://github.com/Kini99/MisogiAI-interactive-prompt-playground"
 cd MisogiAI-interactive-prompt-playground
 ```
 
